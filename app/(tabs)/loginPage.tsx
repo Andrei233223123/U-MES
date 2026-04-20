@@ -1,26 +1,54 @@
 import { ThemedText } from '@/components/ThemedText';
-import { auth } from '@/firebaseConfig';
+import { auth, db } from '@/firebaseConfig';
 import { BlurView } from 'expo-blur';
+import { useRouter } from 'expo-router';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import { useState } from 'react';
-import { Image, Modal, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Modal, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function LoginPage() {
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [username, setUsername] = useState('Admin');
+    const [username, setUsername] = useState('');
     const [showModal, setShowModal] = useState(false);
+    const [invalidModal, setInvalidModal] = useState(false);
+    const [isLogin, setIsLogin] = useState('Login');
+    const [pressable,setPressable] = useState(false);
+    const router = useRouter();
+
     const userAuthenticate = async () => {
+        setPressable(true);
+        setIsLogin('Logging in...')
+        await new Promise((resolve) => setTimeout(resolve, 2000))
+
+        if (!email || !password) {
+            setIsLogin('Login')
+            setInvalidModal(true);
+            setPressable(false);
+            return;
+        }
 
         try {
-            await signInWithEmailAndPassword(auth, email, password);
+            const uid = await signInWithEmailAndPassword(auth, email, password);
+            const getUser = uid.user;
 
-            const uid = auth.currentUser?.uid;
+            const docRef = doc(db, 'users', getUser.uid);
+
+            const snap = await getDoc(docRef);
+
+            if (snap.exists()) {
+                const data = snap.data();
+                await setUsername(`${data.fullName}`);
+                setShowModal(true);
+            }
 
 
         } catch (err: any) {
-
+            const code = err.code
+            Alert.alert('Error Fetching User', code)
+            setPressable(false);
         }
     }
     return (
@@ -54,12 +82,14 @@ export default function LoginPage() {
                     ></TextInput>
                 </View>
 
-                <TouchableOpacity style={styles.button}>
-                    <Text style={{ color: 'white', fontSize: 15, fontWeight: 'bold' }}>Login</Text>
+                <TouchableOpacity style={styles.button} onPress={userAuthenticate}
+                    disabled={pressable}
+                >
+                    <Text style={{ color: 'white', fontSize: 15, fontWeight: 'bold' }}>{isLogin}</Text>
                 </TouchableOpacity>
 
                 <View style={styles.register}>
-                    <Text>Don't have an account? <Text style={{ color: '#0f1340', fontWeight: 'bold' }}>Register as Customer</Text></Text>
+                    <Text>Don't have an account? <Text style={{ color: '#0f1340', fontWeight: 'bold' }} onPress={() => router.push('/registrationPage')}>Register as Customer</Text></Text>
                 </View>
 
                 <View style={styles.credentials}>
@@ -82,16 +112,41 @@ export default function LoginPage() {
                 >
                     <View>
                         <View style={styles.modalCard}>
-                            
+
                             <Image
                                 source={require('@/assets/images/lofi.gif')}
                                 style={{ width: 70, height: 70 }}
                             ></Image>
-                            <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 20 }}>Welcome Back {username}!</Text>
-                            <TouchableOpacity style={styles.continue}>
+                            <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 20, marginHorizontal:10 }}>Welcome Back {username}!</Text>
+                            <TouchableOpacity style={styles.continue} onPress={() => { router.push({ pathname: '/navigation', params: { username: username } }) }}>
                                 <Text style={{ color: 'white' }}>Continue</Text>
                             </TouchableOpacity>
                         </View>
+                    </View>
+                </BlurView>
+            </Modal>
+
+            <Modal
+                visible={invalidModal}
+                statusBarTranslucent={true}
+                presentationStyle='fullScreen'
+                transparent={true}
+            >
+                <BlurView
+                    intensity={100}
+                    tint='dark'
+                    style={{ flex: 1, justifyContent: 'center' }}
+                >
+                    <View style={styles.modalCard}>
+
+                        <Image
+                            source={require('@/assets/images/lofi.gif')}
+                            style={{ width: 70, height: 70 }}
+                        ></Image>
+                        <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 20 }}>Email or Password are incorrect</Text>
+                        <TouchableOpacity style={styles.continue} onPress={() => setInvalidModal(false)}>
+                            <Text style={{ color: 'white' }}>Continue</Text>
+                        </TouchableOpacity>
                     </View>
                 </BlurView>
             </Modal>
@@ -136,7 +191,7 @@ const styles = {
     },
     modalCard: {
         backgroundColor: 'white',
-        paddingHorizontal: 50,
+        marginHorizontal:20,
         paddingBottom: 20,
         borderRadius: 20,
         alignItems: 'center'
@@ -145,8 +200,8 @@ const styles = {
         backgroundColor: 'black',
         borderRadius: 5,
         padding: 10,
-        width:150,
-        alignItems:'center'
+        width: 150,
+        alignItems: 'center'
     },
 
 }

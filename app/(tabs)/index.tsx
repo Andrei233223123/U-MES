@@ -1,18 +1,34 @@
 import { View } from '@/components/Themed';
-import { StyleSheet } from 'react-native';
-import RegistrationPage from './registrationPage';
-
+import { useEffect } from 'react';
+import { BackHandler, StyleSheet } from 'react-native';
+import Navigation from './navigation';
 export default function TabOneScreen() {
+
+
+  useEffect(() => {
+
+    const onBackPress = ()=>{
+      
+      return false;
+    }
+
+    BackHandler.addEventListener('hardwareBackPress',onBackPress);
+
+  }, []);
+
+
   return (
+
     <View style={styles.container}>
-      <RegistrationPage/>
+      <Navigation />
     </View>
   );
+
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  
+
 });
