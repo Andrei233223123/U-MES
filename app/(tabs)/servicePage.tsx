@@ -20,6 +20,9 @@ export default function ServicePage() {
                 <Text style={{ color: 'white' }}> Active (1)</Text>
             </View>
 
+            <View>
+                
+            </View>
         </ScrollView>
     );
 }
