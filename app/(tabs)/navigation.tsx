@@ -4,8 +4,8 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { useLocalSearchParams, useRootNavigationState, useRouter } from 'expo-router';
+import { Alert, Text, TouchableOpacity, View } from 'react-native';
 import HomePage from './homePage';
 import ServicePage from './servicePage';
 const Drawer = createDrawerNavigator();
@@ -16,6 +16,8 @@ function CustomeDrawerContent(props: any) {
     const currentRoute = props.state.routes[props.state.index].name;
     const router = useRouter();
     const { username } = useLocalSearchParams();
+
+   
     return (
         <View style={{ flex: 1, backgroundColor: '#010408f5' }}>
 
@@ -98,7 +100,17 @@ function CustomeDrawerContent(props: any) {
 }
 
 
-export default function Navigation() {
+export default  function Navigation() {
+    const {username} = useLocalSearchParams();
+    const router = useRouter();
+    const rootNavState = useRootNavigationState();
+
+    if(!username){
+        Alert.alert('error','username not defined');
+        async ()=> await new Promise((resolve) => setTimeout(resolve,2000));
+        router.push('/loginPage');
+        
+    }
 
     return (
 

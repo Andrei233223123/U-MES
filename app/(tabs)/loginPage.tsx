@@ -104,6 +104,7 @@ export default function LoginPage() {
                 statusBarTranslucent={true}
                 presentationStyle='fullScreen'
                 transparent={true}
+                animationType='fade'
             >
                 <BlurView
                     intensity={100}
@@ -131,6 +132,7 @@ export default function LoginPage() {
                 statusBarTranslucent={true}
                 presentationStyle='fullScreen'
                 transparent={true}
+                animationType='fade'
             >
                 <BlurView
                     intensity={100}
