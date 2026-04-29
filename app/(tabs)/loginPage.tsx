@@ -4,159 +4,151 @@ import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { useState } from 'react';
-import { Alert, Image, Modal, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { Alert, Image, Linking, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function LoginPage() {
-
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [username, setUsername] = useState('');
+    const [userRole, setUserRole] = useState('');
+
     const [showModal, setShowModal] = useState(false);
     const [invalidModal, setInvalidModal] = useState(false);
     const [isLogin, setIsLogin] = useState('Login');
-    const [pressable,setPressable] = useState(false);
+    const [pressable, setPressable] = useState(false);
     const router = useRouter();
 
     const userAuthenticate = async () => {
-        setPressable(true);
-        setIsLogin('Logging in...')
-        await new Promise((resolve) => setTimeout(resolve, 2000))
-
         if (!email || !password) {
-            setIsLogin('Login')
             setInvalidModal(true);
-            setPressable(false);
             return;
         }
 
+        setPressable(true);
+        setIsLogin('Logging in...');
+
         try {
-            const uid = await signInWithEmailAndPassword(auth, email, password);
-            const getUser = uid.user;
+            // 1. Firebase Auth Sign In
+            const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
+            const user = userCredential.user;
 
-            const docRef = doc(db, 'users', getUser.uid);
-
+            // 2. Fetch User Details & Role from Firestore
+            const docRef = doc(db, 'users', user.uid);
             const snap = await getDoc(docRef);
 
             if (snap.exists()) {
                 const data = snap.data();
-                await setUsername(`${data.fullName}`);
+                setUsername(data.fullName || 'User');
+                setUserRole(data.role || 'customer'); // Default to customer if role missing
                 setShowModal(true);
+            } else {
+                Alert.alert("Error", "User data not found in database.");
+                setPressable(false);
+                setIsLogin('Login');
             }
 
-
         } catch (err: any) {
-            const code = err.code
-            Alert.alert('Error Fetching User', code)
+            console.error(err);
+            setInvalidModal(true);
             setPressable(false);
+            setIsLogin('Login');
         }
-    }
+    };
+
+    const handleContinue = (role) => {
+        if (role === 'admin') {
+            // Redirect Admin to the Web URL
+            Linking.openURL('https://your-admin-web-url.com');
+        } else {
+
+            router.push({ pathname: '/navigation', params: { username: username } });
+        }
+    };
+
     return (
         <View style={styles.background}>
             <View style={styles.box}>
-                <View style={{ justifyContent: 'center', alignItems: 'center', marginVertical: 20 }}>
-                    <ThemedText style={{ fontSize: 24, color: '#191970', fontWeight: 'bold' }}>U-MES</ThemedText>
-                    <Text>Motorcycle Servcie Management</Text>
+                <View style={styles.headerContainer}>
+                    <ThemedText style={styles.logoText}>U-MES</ThemedText>
+                    <Text style={styles.subLogoText}>Motorcycle Service Management</Text>
                 </View>
 
-                <View style={{ marginHorizontal: 20, marginVertical: 5 }}>
-                    <Text style={{ fontWeight: 'bold' }}>Email Address</Text>
+                <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Email Address</Text>
                     <TextInput
-                        keyboardType='default'
+                        autoCapitalize="none"
+                        autoCorrect={false}
                         placeholder='Enter your email'
                         onChangeText={setEmail}
                         value={email}
-                        style={{ borderWidth: 1, borderRadius: 5, borderColor: 'rgba(0,0,0,0.2)', marginVertical: 5 }}
-                    ></TextInput>
+                        style={styles.input}
+                    />
                 </View>
 
-                <View style={{ marginHorizontal: 20, marginVertical: 5 }}>
-                    <Text style={{ fontWeight: 'bold' }}>Password</Text>
+                <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Password</Text>
                     <TextInput
-                        keyboardType='default'
                         placeholder='Enter your password'
                         secureTextEntry={true}
                         onChangeText={setPassword}
                         value={password}
-                        style={{ borderWidth: 1, borderRadius: 5, borderColor: 'rgba(0,0,0,0.2)', marginVertical: 5 }}
-                    ></TextInput>
+                        style={styles.input}
+                    />
                 </View>
 
-                <TouchableOpacity style={styles.button} onPress={userAuthenticate}
+                <TouchableOpacity
+                    style={[styles.button, pressable && { opacity: 0.7 }]}
+                    onPress={userAuthenticate}
                     disabled={pressable}
                 >
-                    <Text style={{ color: 'white', fontSize: 15, fontWeight: 'bold' }}>{isLogin}</Text>
+                    <Text style={styles.buttonText}>{isLogin}</Text>
                 </TouchableOpacity>
 
-                <View style={styles.register}>
-                    <Text>Don't have an account? <Text style={{ color: '#0f1340', fontWeight: 'bold' }} onPress={() => router.push('/registrationPage')}>Register as Customer</Text></Text>
+                <View style={styles.registerContainer}>
+                    <Text>Don't have an account? </Text>
+                    <TouchableOpacity onPress={() => router.push('/registrationPage')}>
+                        <Text style={styles.registerLink}>Register as Customer</Text>
+                    </TouchableOpacity>
                 </View>
 
-                <View style={styles.credentials}>
-                    <Text style={{ marginBottom: 10 }}>Demo Credentials:</Text>
-                    <Text style={{ fontWeight: 'bold', color: '#0f1340' }}>Admin: <Text style={{ color: 'black', fontWeight: 400 }}>admin@umesadmin.com/123</Text></Text>
-                    <Text style={{ fontWeight: 'bold', color: '#0f1340' }}>Customer: <Text style={{ color: 'black', fontWeight: 400 }}>customer@umes.com/123</Text></Text>
+                <View style={styles.credentialsBox}>
+                    <Text style={styles.demoTitle}>Demo Credentials:</Text>
+                    <Text style={styles.demoText}><Text style={styles.bold}>Admin:</Text> admin@umesadmin.com / 123</Text>
+                    <Text style={styles.demoText}><Text style={styles.bold}>Customer:</Text> customer@umes.com / 123</Text>
                 </View>
             </View>
 
-            <Modal
-                visible={showModal}
-                statusBarTranslucent={true}
-                presentationStyle='fullScreen'
-                transparent={true}
-                animationType='fade'
-            >
-                <BlurView
-                    intensity={100}
-                    tint='dark'
-                    style={styles.modal}
-                >
-                    <View>
-                        <View style={styles.modalCard}>
-
-                            <Image
-                                source={require('@/assets/images/lofi.gif')}
-                                style={{ width: 70, height: 70 }}
-                            ></Image>
-                            <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 20, marginHorizontal:10 }}>Welcome Back {username}!</Text>
-                            <TouchableOpacity style={styles.continue} onPress={() => { router.push({ pathname: '/navigation', params: { username: username } }) }}>
-                                <Text style={{ color: 'white' }}>Continue</Text>
-                            </TouchableOpacity>
-                        </View>
+            {/* Success Welcome Modal */}
+            <Modal visible={showModal} transparent={true} animationType='fade'>
+                <BlurView intensity={100} tint='dark' style={styles.modalOverlay}>
+                    <View style={styles.modalCard}>
+                        <Image source={require('@/assets/images/lofi.gif')} style={styles.modalGif} />
+                        <Text style={styles.welcomeText}>Welcome Back, {username}!</Text>
+                        <TouchableOpacity style={styles.continueBtn} onPress={handleContinue}>
+                            <Text style={styles.continueText}>Continue</Text>
+                        </TouchableOpacity>
                     </View>
                 </BlurView>
             </Modal>
 
-            <Modal
-                visible={invalidModal}
-                statusBarTranslucent={true}
-                presentationStyle='fullScreen'
-                transparent={true}
-                animationType='fade'
-            >
-                <BlurView
-                    intensity={100}
-                    tint='dark'
-                    style={{ flex: 1, justifyContent: 'center' }}
-                >
+            {/* Error Modal */}
+            <Modal visible={invalidModal} transparent={true} animationType='fade'>
+                <BlurView intensity={100} tint='dark' style={styles.modalOverlay}>
                     <View style={styles.modalCard}>
-
-                        <Image
-                            source={require('@/assets/images/lofi.gif')}
-                            style={{ width: 70, height: 70 }}
-                        ></Image>
-                        <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 20 }}>Email or Password are incorrect</Text>
-                        <TouchableOpacity style={styles.continue} onPress={() => setInvalidModal(false)}>
-                            <Text style={{ color: 'white' }}>Continue</Text>
+                        <Image source={require('@/assets/images/lofi.gif')} style={styles.modalGif} />
+                        <Text style={styles.errorText}>Invalid email or password</Text>
+                        <TouchableOpacity style={styles.continueBtn} onPress={() => setInvalidModal(false)}>
+                            <Text style={styles.continueText}>Try Again</Text>
                         </TouchableOpacity>
                     </View>
                 </BlurView>
             </Modal>
         </View>
-    )
+    );
 }
 
-const styles = {
+const styles = StyleSheet.create({
     background: {
         backgroundColor: '#0f1340',
         flex: 1,
@@ -165,45 +157,122 @@ const styles = {
     },
     box: {
         backgroundColor: 'white',
-        width: 350,
-        borderRadius: 10
+        width: '90%',
+        maxWidth: 350,
+        borderRadius: 15,
+        paddingVertical: 20,
+        elevation: 5,
+    },
+    headerContainer: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginVertical: 20,
+    },
+    logoText: {
+        fontSize: 28,
+        color: '#0f1340',
+        fontWeight: 'bold',
+    },
+    subLogoText: {
+        fontSize: 12,
+        color: '#666',
+    },
+    inputGroup: {
+        marginHorizontal: 25,
+        marginVertical: 8,
+    },
+    label: {
+        fontWeight: 'bold',
+        marginBottom: 5,
+        fontSize: 14,
+        color: '#333',
+    },
+    input: {
+        borderWidth: 1,
+        borderRadius: 8,
+        borderColor: '#ddd',
+        padding: 12,
+        fontSize: 14,
     },
     button: {
         justifyContent: 'center',
         alignItems: 'center',
-        margin: 10,
-        marginHorizontal: 20,
-        backgroundColor: '#0f1340',
-        borderRadius: 5,
-        padding: 10
-    },
-    register: {
-        marginHorizontal: 20,
-        alignItems: 'center'
-    },
-    credentials: {
-        margin: 20,
+        marginTop: 20,
         marginHorizontal: 25,
-        gap: 2
+        backgroundColor: '#0f1340',
+        borderRadius: 8,
+        padding: 15,
     },
-    modal: {
+    buttonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    registerContainer: {
+        marginTop: 15,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    registerLink: {
+        color: '#0f1340',
+        fontWeight: 'bold',
+    },
+    credentialsBox: {
+        marginTop: 25,
+        padding: 15,
+        backgroundColor: '#f8f9fa',
+        marginHorizontal: 25,
+        borderRadius: 8,
+    },
+    demoTitle: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        marginBottom: 5,
+    },
+    demoText: {
+        fontSize: 11,
+        color: '#555',
+    },
+    bold: { fontWeight: 'bold' },
+    modalOverlay: {
         flex: 1,
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
     },
     modalCard: {
         backgroundColor: 'white',
-        marginHorizontal:20,
-        paddingBottom: 20,
+        width: '80%',
+        padding: 30,
         borderRadius: 20,
-        alignItems: 'center'
+        alignItems: 'center',
     },
-    continue: {
-        backgroundColor: 'black',
-        borderRadius: 5,
-        padding: 10,
-        width: 150,
-        alignItems: 'center'
+    modalGif: {
+        width: 80,
+        height: 80,
+        marginBottom: 15,
     },
-
-}
+    welcomeText: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginBottom: 20,
+    },
+    errorText: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        color: '#d9534f',
+        marginBottom: 20,
+    },
+    continueBtn: {
+        backgroundColor: '#0f1340',
+        borderRadius: 8,
+        paddingVertical: 12,
+        paddingHorizontal: 30,
+    },
+    continueText: {
+        color: 'white',
+        fontWeight: 'bold',
+    },
+});

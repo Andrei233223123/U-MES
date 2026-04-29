@@ -3,8 +3,9 @@ import Entypo from '@expo/vector-icons/Entypo';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { createDrawerNavigator, DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
-import { useLocalSearchParams, useRootNavigationState, useRouter } from 'expo-router';
+import { createDrawerNavigator, DrawerContentScrollView, DrawerItem, DrawerToggleButton } from '@react-navigation/drawer';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { Alert, Text, TouchableOpacity, View } from 'react-native';
 import HomePage from './homePage';
 import ServicePage from './servicePage';
@@ -17,7 +18,7 @@ function CustomeDrawerContent(props: any) {
     const router = useRouter();
     const { username } = useLocalSearchParams();
 
-   
+
     return (
         <View style={{ flex: 1, backgroundColor: '#010408f5' }}>
 
@@ -40,7 +41,7 @@ function CustomeDrawerContent(props: any) {
                 <DrawerItem
                     label={'My Services'}
                     icon={({ size }) => <FontAwesome name='wrench' size={size} color={'black'} />}
-                    style={{ backgroundColor: currentRoute === 'Services' ? 'white' : '#ffffff1a', borderRadius: 10, marginTop: 50, marginBottom: -30, justifyContent: 'center',}}
+                    style={{ backgroundColor: currentRoute === 'Services' ? 'white' : '#ffffff1a', borderRadius: 10, marginTop: 50, marginBottom: -30, justifyContent: 'center', }}
                     labelStyle={{ fontWeight: 'bold', color: 'black', fontSize: 17 }}
                     onPress={() => props.navigation.navigate('Services')}
 
@@ -100,22 +101,37 @@ function CustomeDrawerContent(props: any) {
 }
 
 
-export default  function Navigation() {
-    const {username} = useLocalSearchParams();
+export default function Navigation() {
+    const { username } = useLocalSearchParams();
     const router = useRouter();
-    const rootNavState = useRootNavigationState();
 
-    if(!username){
-        Alert.alert('error','username not defined');
-        async ()=> await new Promise((resolve) => setTimeout(resolve,2000));
-        router.push('/loginPage');
-        
+    useEffect(() => {
+        if (!username) {
+            Alert.alert('Error', 'Username not defined');
+
+            const timeout = setTimeout(() => {
+                router.replace('/loginPage');
+            }, 100); 
+
+            return () => clearTimeout(timeout);
+        }
+    }, [username, router]);
+
+    if (!username) {
+        return null;
     }
 
     return (
 
         <Drawer.Navigator
             drawerContent={(props) => <CustomeDrawerContent {...props} />}
+            screenOptions={
+                {
+                    headerShown:true,
+                    headerLeft: () => <DrawerToggleButton/>,
+                    headerTintColor:'#000'
+                }
+            }
         >
 
             <Drawer.Screen

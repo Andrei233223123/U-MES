@@ -1,6 +1,7 @@
 import { View } from '@/components/Themed';
 import { useEffect } from 'react';
 import { BackHandler, StyleSheet } from 'react-native';
+import 'react-native-gesture-handler';
 import Navigation from './navigation';
 export default function TabOneScreen() {
 
