@@ -25,6 +25,14 @@ interface ServiceRecord {
     createdAt?: any;
 }
 
+interface Motorcycle {
+    id: string;
+    data: {
+        Brand: string;
+        Model: string;
+    }
+}
+
 export function Completed({ username }: { username: string }) {
     const [completedServices, setCompletedServices] = useState<ServiceRecord[]>([]);
 
@@ -118,7 +126,7 @@ export function Active({ username }: { username: string }) {
                                 <Text style={styles.stepLabel}>Approved</Text>
                             </View>
                             <View style={[styles.stepLine, isApproved ? { backgroundColor: '#000' } : { backgroundColor: '#dee2e6' }]} />
-                            
+
                             <View style={styles.stepItem}>
                                 <View style={styles.stepCircle}>
                                     <Text style={styles.stepNumber}>2</Text>
@@ -126,7 +134,7 @@ export function Active({ username }: { username: string }) {
                                 <Text style={styles.stepLabel}>Payment</Text>
                             </View>
                             <View style={styles.stepLineDisabled} />
-                            
+
                             <View style={styles.stepItem}>
                                 <View style={styles.stepCircle}>
                                     <Text style={styles.stepNumber}>3</Text>
@@ -170,7 +178,7 @@ export function Active({ username }: { username: string }) {
                                 </View>
                                 <View style={styles.infoCol}>
                                     <Text style={styles.infoLabel}>Request Date</Text>
-                                    <Text style={styles.infoValue}>{item.date}</Text> 
+                                    <Text style={styles.infoValue}>{item.date}</Text>
                                 </View>
                             </View>
                         )}
@@ -210,12 +218,23 @@ export default function ServicePage() {
     const [counts, setCounts] = useState({ active: 0, completed: 0 });
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedMotorcycle, setSelectedMotorcycle] = useState('Yamaha Mio i 125');
-    const [selectedService, setSelectedService] = useState('Change Oil');
+    const [selectedService, setSelectedService] = useState('');
     const [date, setDate] = useState(new Date());
     const [showDate, setShowDate] = useState(false);
     const [time, setTime] = useState(new Date());
     const [showTime, setShowTime] = useState(false);
     const [issue, setIssue] = useState('');
+
+    const [motoryCycle, setMotorcycle] = useState<Motorcycle[]>([]);
+    
+    const estimatedCost = selectedService === 'Change Oil' ? '500' : selectedService === 'Brake Service' ? '800' : '1200';
+    useEffect(() => {
+        const q = query(collection(db, 'motorcycles'), where('Customer', '==', username));
+        const unsub = onSnapshot(q, (snapshot) => {
+            setMotorcycle(snapshot.docs.map(doc => ({data: doc.data(), id: doc.id} as Motorcycle)));
+            
+        });
+    }, [])
 
     useEffect(() => {
         if (!username) return;
@@ -236,7 +255,7 @@ export default function ServicePage() {
                 customer: username, motorcycle: selectedMotorcycle, serviceType: selectedService,
                 date: date.toLocaleDateString(), time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 issueDescription: issue, status: "pending", createdAt: serverTimestamp(),
-                assignedStaff: "", estCost: "0", estTime: "", amount: "", paymentMethod: "GCash"
+                assignedStaff: "", estCost: estimatedCost, estTime: "", amount: "", paymentMethod: "GCash"
             });
             setModalVisible(false); setIssue(''); alert("Request Sent!");
         } catch (e) { console.error(e); }
@@ -255,7 +274,7 @@ export default function ServicePage() {
                 </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.RequestService} onPress={() => setModalVisible(true)}>
+            <TouchableOpacity style={styles.RequestService} onPress={() => { setModalVisible(true) }}>
                 <AntDesign name='plus' size={20} color={'white'} /><Text style={{ color: 'white', fontWeight: 'bold' }}>Request New Service</Text>
             </TouchableOpacity>
 
@@ -265,7 +284,7 @@ export default function ServicePage() {
                 animationType='slide'
                 visible={modalVisible}
                 transparent={true}
-                statusBarTranslucent={true} // Ensures blur covers the status bar area
+                statusBarTranslucent={true} 
             >
                 <BlurView style={styles.modalOverlay} intensity={90} tint='dark'>
                     <View style={styles.modalContent}>
@@ -279,9 +298,10 @@ export default function ServicePage() {
                                 onValueChange={(v) => setSelectedMotorcycle(v)}
                                 style={styles.pickerStyle}
                             >
-                                <Picker.Item label="Yamaha Mio i 125" value="Yamaha Mio i 125" />
-                                <Picker.Item label="Honda Click 125i" value="Honda Click 125i" />
-                                <Picker.Item label="Suzuki Burgman" value="Suzuki Burgman" />
+                                {motoryCycle.map((m) => (
+                                
+                                    <Picker.Item key={m.id} label={m.data.Brand + " " + m.data.Model} value={m.data.Brand + " " + m.data.Model} />
+                                ))}
                             </Picker>
                         </View>
 
@@ -409,11 +429,11 @@ const styles = StyleSheet.create({
     modalActions: { flexDirection: 'row', gap: 10 },
     submitBtn: { flex: 2, backgroundColor: 'black', padding: 15, borderRadius: 8, alignItems: 'center' },
     cancelBtn: { flex: 1, padding: 15, borderRadius: 8, alignItems: 'center', borderWidth: 1, borderColor: '#ddd' },
-    inputLabel: {fontSize: 14,fontWeight: '600',color: '#444',marginBottom: 8,},
-    pickerWrapper: {borderWidth: 1,borderColor: '#ddd',borderRadius: 10,marginBottom: 15,overflow: 'hidden',},
-    pickerStyle: {width: '100%',height: 50,},
-    dateTimeRow: {flexDirection: 'row',gap: 10,marginBottom: 15,},
-    dateTimeText: {fontSize: 14,color: '#333',},
+    inputLabel: { fontSize: 14, fontWeight: '600', color: '#444', marginBottom: 8, },
+    pickerWrapper: { borderWidth: 1, borderColor: '#ddd', borderRadius: 10, marginBottom: 15, overflow: 'hidden', },
+    pickerStyle: { width: '100%', height: 50, },
+    dateTimeRow: { flexDirection: 'row', gap: 10, marginBottom: 15, },
+    dateTimeText: { fontSize: 14, color: '#333', },
     adminFeedbackBox: {
         backgroundColor: '#f8f9fa',
         borderRadius: 10,

@@ -29,18 +29,18 @@ export default function LoginPage() {
         setIsLogin('Logging in...');
 
         try {
-            // 1. Firebase Auth Sign In
+          
             const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
             const user = userCredential.user;
 
-            // 2. Fetch User Details & Role from Firestore
+           
             const docRef = doc(db, 'users', user.uid);
             const snap = await getDoc(docRef);
 
             if (snap.exists()) {
                 const data = snap.data();
                 setUsername(data.fullName || 'User');
-                setUserRole(data.role || 'customer'); // Default to customer if role missing
+                setUserRole(data.role || 'customer'); 
                 setShowModal(true);
             } else {
                 Alert.alert("Error", "User data not found in database.");
@@ -56,10 +56,10 @@ export default function LoginPage() {
         }
     };
 
-    const handleContinue = (role) => {
-        if (role === 'admin') {
-            // Redirect Admin to the Web URL
-            Linking.openURL('https://your-admin-web-url.com');
+    const handleContinue = () => {
+        if (userRole === 'admin') {
+            
+            Linking.openURL('https://admin-web-url.com');
         } else {
 
             router.push({ pathname: '/navigation', params: { username: username } });

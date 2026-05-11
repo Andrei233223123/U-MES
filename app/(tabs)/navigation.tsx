@@ -8,6 +8,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { Alert, Text, TouchableOpacity, View } from 'react-native';
 import HomePage from './homePage';
+import Motorcycle from './motorcycle';
 import ServicePage from './servicePage';
 const Drawer = createDrawerNavigator();
 
@@ -52,7 +53,7 @@ function CustomeDrawerContent(props: any) {
                     icon={({ size }) => <MaterialIcons name='motorcycle' size={size} color={'black'} />}
                     style={{ backgroundColor: currentRoute === 'Motorcycle' ? 'white' : '#ffffff1a', borderRadius: 10, marginTop: 50, marginBottom: -30, justifyContent: 'center' }}
                     labelStyle={{ fontWeight: 'bold', color: 'black', fontSize: 17 }}
-                    onPress={() => alert('hello world')}
+                    onPress={() => props.navigation.navigate('Motorcycle')}
 
                 />
 
@@ -145,6 +146,10 @@ export default function Navigation() {
                 component={ServicePage}
             ></Drawer.Screen>
 
+            <Drawer.Screen
+                name='Motorcycle'
+                component={Motorcycle}
+            ></Drawer.Screen>
         </Drawer.Navigator>
 
     );

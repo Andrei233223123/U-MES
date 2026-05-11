@@ -21,6 +21,11 @@ interface ServiceRecord {
     estCost?: string;
 }
 
+interface Motorcycle {
+    id: string;
+    Model: string;
+}
+
 export default function HomePage() {
     const { username } = useLocalSearchParams();
     const navigation = useNavigation();
@@ -36,7 +41,14 @@ export default function HomePage() {
     const [recentCompleted, setRecentCompleted] = useState<ServiceRecord[]>([]);
     const [loading, setLoading] = useState(true);
 
-useEffect(() => {
+    useEffect(() => {
+        const q = query(collection(db, 'motorcycles'), where('Customer', '==', username));
+        const unsubMotorycle = onSnapshot(q, (snap) => {
+            setMotoCount(snap.docs.length);
+        })
+    }, [])
+
+    useEffect(() => {
         if (!username) return;
 
         // 1. Listen for Services (Active & Completed)
@@ -139,7 +151,7 @@ useEffect(() => {
             <View style={styles.quickActionContainer}>
                 <Text style={styles.sectionTitle}>Quick Actions</Text>
                 <View style={{ gap: 12 }}>
-                    <TouchableOpacity style={styles.quickCard} onPress={() => navigation.navigate('Services', { username: username})}>
+                    <TouchableOpacity style={styles.quickCard} onPress={() => navigation.navigate('Services', { username: username })}>
                         <AntDesign name='plus-square' size={20} color="#020923" />
                         <Text style={styles.quickText}>Request New Service</Text>
                     </TouchableOpacity>
@@ -236,26 +248,26 @@ const styles = StyleSheet.create({
         backgroundColor: 'white', borderRadius: 15,
         padding: 20, elevation: 3, borderWidth: 1, borderColor: '#f0f0f0'
     },
-    sectionTitle: { fontSize: 17, fontWeight: 'bold', marginBottom: 15, color: '#101828' },
+    sectionTitle: { fontSize: 17, fontWeight: 'bold', marginBottom: 15, color: '#101828', },
     quickCard: {
         flexDirection: 'row', gap: 12, borderRadius: 10,
         borderColor: '#020923', borderWidth: 1.5,
         padding: 14, alignItems: 'center'
     },
     quickText: { fontSize: 15, fontWeight: '600' },
-    ActiveServices: { marginTop: 30, backgroundColor: 'white', borderRadius: 15, paddingBottom: 15, elevation: 2 },
+    ActiveServices: { marginTop: 30, backgroundColor: 'white', borderRadius: 15, paddingBottom: 15, elevation: 2, },
     AS_COMP: {
         flexDirection: 'row', justifyContent: 'space-between',
-        padding: 15, borderBottomWidth: 1, borderBottomColor: '#f0f0f0'
+        padding: 15, borderBottomWidth: 1, borderBottomColor: '#f0f0f0',
     },
-    badge: { backgroundColor: '#101828', paddingHorizontal: 10, paddingVertical: 2, borderRadius: 5 },
+    badge: { backgroundColor: '#101828', paddingHorizontal: 10, paddingVertical: 2, borderRadius: 5, justifyContent: 'center', alignItems: 'center' },
     badgeText: { color: 'white', fontWeight: 'bold' },
-    AS_COMP2: { marginHorizontal: 15, marginTop: 12, padding: 12, borderWidth: 1, borderColor: '#f0f0f0', borderRadius: 12 },
+    AS_COMP2: { marginHorizontal: 15, marginTop: 12, padding: 12, borderWidth: 1, borderColor: '#f0f0f0', borderRadius: 12, },
     AS_COMP2_SUB1: { flexDirection: 'row', justifyContent: 'space-between' },
-    statusBadgeSmall: { backgroundColor: '#f39c12', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 5 },
+    statusBadgeSmall: { backgroundColor: '#f39c12', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 5, justifyContent: 'center', alignItems: 'center' },
     statusTextSmall: { color: 'white', fontSize: 10, fontWeight: 'bold' },
-    completedBadge: { backgroundColor: '#2ecc71', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 5 },
-    completedBadgeText: { color: 'white', fontSize: 10, fontWeight: 'bold' },
-    CompletedServices: { marginTop: 30, marginBottom: 80, backgroundColor: 'white', borderRadius: 15, paddingBottom: 15, elevation: 2 },
+    completedBadge: { backgroundColor: '#2ecc71', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 5, justifyContent: 'center', alignItems: 'center' },
+    completedBadgeText: { color: 'white', fontSize: 10, fontWeight: 'bold', },
+    CompletedServices: { marginTop: 30, marginBottom: 80, backgroundColor: 'white', borderRadius: 15, paddingBottom: 15, elevation: 2, },
     emptyText: { textAlign: 'center', padding: 20, color: '#999', fontSize: 13 }
 });

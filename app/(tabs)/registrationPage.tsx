@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
-import { Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 
 export default function Registration() {
@@ -168,7 +168,7 @@ export default function Registration() {
     );
 }
 
-export const styles = {
+export const styles = StyleSheet.create( {
     main: {
         justifyContent: 'center',
         alignItems: 'center',
@@ -208,4 +208,4 @@ export const styles = {
         alignItems: 'center'
     }
 
-}
+})
